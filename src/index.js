@@ -11,22 +11,21 @@ fastify.register(import('@fastify/multipart'), {
 });
 fastify.register(import('@fastify/cookie'));
 
-fastify.post('/uppercase', (request, reply) => {
-  const body = request.body;
-  if (body.toLowerCase().includes('fuck')) {
+const checkCensor = (str, reply) => {
+  if (str.toLowerCase().includes('fuck')) {
     return reply.status(403).send('unresolved');
-  } else {
-    return reply.send(body.toUpperCase());
   }
+  return reply.send(str);
+}
+
+fastify.post('/uppercase', (request, reply) => {
+  const str = request.body.toUpperCase();
+  checkCensor(str, reply)
 });
 
 fastify.post('/lowercase', (request, reply) => {
-  const body = request.body.toLowerCase();
-  if (body.includes('fuck')) {
-    return reply.status(403).send('unresolved');
-  } else {
-    return reply.send(body);
-  }
+  const str = request.body.toLowerCase();
+  checkCensor(str, reply)
 });
 
 fastify.get('/user/:id', (request, reply) => {
@@ -40,16 +39,12 @@ fastify.get('/user/:id', (request, reply) => {
 
 fastify.get('/users', (request, reply) => {
   const { filter, value } = request.query;
-  const usersArray = Object.values(users);
   if (!filter && !value) {
-    return reply.send(usersArray);
+    return reply.send(Object.values(users));
   }
-  let valueMod;
-  (!isNaN(+value)) ? valueMod = +value : valueMod = value;
-  const filtered = usersArray.filter(user => {
-    return user[filter] === valueMod;
-  });
-  return reply.send(filtered);
+  return reply.send(
+    Object.values(users).filter((user) => String(user[filter]) === value)
+  );
 });
 
 export default fastify;
